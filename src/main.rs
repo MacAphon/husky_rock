@@ -1,33 +1,22 @@
-use sdl2::pixels::Color;
+mod entity;
+mod render;
+mod map;
+
+use std::time::{Duration, Instant};
+
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
-use sdl2::image::{self, LoadTexture, InitFlag};
-use sdl2::render::{Texture, WindowCanvas};
-use std::time::Duration;
+
 use sdl2::rect::{Point, Rect};
+use sdl2::pixels::Color;
+use sdl2::image::{self, LoadTexture, InitFlag};
+//use clap::{Arg, Command};
 
-fn render(
-    canvas: &mut WindowCanvas,
-    color: Color,
-    texture: &Texture,
-    position: Point,
-    sprite: Rect
-) -> Result<(), String> {
-    canvas.set_draw_color(color);
-    canvas.clear();
 
-    let (width, height) = canvas.output_size()?;
-    let screen_position = position + Point::new(width as i32 / 2, height as i32 / 2);
-    let screen_rect = Rect::from_center(screen_position, sprite.width(), sprite.height());
-
-    canvas.copy(texture, sprite, screen_rect)?;
-
-    canvas.present();
-
-    Ok(())
-}
 
 fn main() -> Result<(), String> {
+
+    // TODO Command-line Arguments
 
     // setup
     let sdl_context = sdl2::init()?;
@@ -53,11 +42,16 @@ fn main() -> Result<(), String> {
 
     let mut event_pump = sdl_context.event_pump()?;
 
-    let mut i = 0;
-    let mut j = 0;
+    let player_start = (0, 0, 0.); // TODO import starting position from map
+
+    let mut player = entity::new_player(player_start);
+
+    let frame_time = Duration::from_millis(1000/60); // for 60 fps
 
     // game loop
     'running: loop {
+        let start_time = Instant::now();
+
         // handle events
         for event in event_pump.poll_iter() {
             match event {
@@ -66,22 +60,21 @@ fn main() -> Result<(), String> {
                     break 'running;
                 },
                 Event::KeyDown {keycode: Some(Keycode::W), .. } => {
-                    j = 128
+
                 },
                 Event::KeyUp {keycode: Some(Keycode::W), .. } => {
-                    j = 0
+
                 },
                 _ => {}
             }
         }
         // update
-        i = (i + 1) % 255;
 
         // render
-        render(&mut canvas, Color::RGB(i, j, 255 - i), &texture, position, sprite)?;
+        //render::render(&mut canvas, Color::RGB(i, j, 255 - i), &texture, position, sprite)?;
 
         // time management
-        ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
+        ::std::thread::sleep(frame_time.saturating_sub(start_time.elapsed()));
     }
 
     Ok(())
