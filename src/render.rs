@@ -3,6 +3,8 @@ use sdl2::image::{self, LoadTexture, InitFlag};
 use sdl2::render::{Texture, WindowCanvas};
 use sdl2::rect::{Point, Rect};
 
+// TODO replace render function
+
 pub fn render(
     canvas: &mut WindowCanvas,
     color: Color,

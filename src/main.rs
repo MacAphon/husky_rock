@@ -1,6 +1,6 @@
-mod entity;
+mod components;
 mod render;
-mod map;
+mod physics;
 
 use std::time::{Duration, Instant};
 
@@ -15,9 +15,9 @@ use sdl2::image::{self, LoadTexture, InitFlag};
 
 
 fn main() -> Result<(), String> {
-
+    /**********************************************************************************************/
     // TODO Command-line Arguments
-
+    /**********************************************************************************************/
     // setup
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;
@@ -33,21 +33,14 @@ fn main() -> Result<(), String> {
         .expect("could not make a canvas");
 
     let texture_creator = canvas.texture_creator();
-    let texture = texture_creator.load_texture("assets/bardo.png")?;
-
-    let position = Point::new(0, 0);
-
-    // src position in the spritesheet
-    let sprite = Rect::new(0, 0, 26, 36);
 
     let mut event_pump = sdl_context.event_pump()?;
 
     let player_start = (0, 0, 0.); // TODO import starting position from map
 
-    let mut player = entity::new_player(player_start);
 
     let frame_time = Duration::from_millis(1000/60); // for 60 fps
-
+    /**********************************************************************************************/
     // game loop
     'running: loop {
         let start_time = Instant::now();
