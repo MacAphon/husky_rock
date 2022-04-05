@@ -15,33 +15,39 @@ impl<'a> System<'a> for Physics {
         ReadStorage<'a, VelocityRelative>,
     );
 
-    fn run(&mut self, mut data: Self::SystemData){
-        let mut position = &mut data.0.position;
-        let mut rotation = &mut data.1.rotation;
-        let movement_rel = &data.2.movement_rel;
-        let movement_rot = &data.2.movement_rot;
+    fn run(&mut self, (mut position, mut rotation, vel_rel): Self::SystemData) {
 
-        let mut rot: f64 = rotation + movement_rot; // calculate new rotation
-        if rot <= 0. { // adjust rotation to be in normal range
-            rot += TAU;
-        } else if rot > TAU {
-            rot -= TAU;
+        for (position,
+             rotation,
+             vel_rel)
+        in (&mut position, &mut rotation, &vel_rel).join() {
+
+            let movement_rot = vel_rel.movement_rot;
+            let movement_rel = vel_rel.movement_rel;
+
+            let mut rot: f64 = rotation.r + movement_rot; // calculate new rotation
+            if rot <= 0. { // adjust rotation to be in normal range
+                rot += TAU;
+            } else if rot > TAU {
+                rot -= TAU;
+            }
+
+            let mut movement_abs: (f64, f64) = (
+                movement_rel.0 * rot.cos() + movement_rel.1 * rot.sin(),
+                movement_rel.1 * rot.cos() - movement_rel.0 * rot.sin(),
+            );
+
+            let mut pos: (f64, f64) =
+                (position.x + movement_abs.0,
+                 position.y + movement_abs.1);
+
+            // TODO add checks for collision and out of bounds
+
+            rotation.r = rot;
+            position.x = pos.0;
+            position.y = pos.1;
         }
 
-        let mut movement_abs: (i32, i32) = (
-            movement_rel.0 * rot.cos() + movement_rel.1 * rot.sin(),
-            movement_rel.1 * rot.cos() - movement_rel.0 * rot.sin(),
-        );
-
-        let mut pos: (f64, f64, f64) =
-            (position.0 + movement_abs.0,
-             position.1 + movement_abs.1,
-             rot);
-
-        // TODO add checks for collision and out of bounds
-
-        rotation = rot;
-        position = pos;
     }
 /*
 

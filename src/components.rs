@@ -10,37 +10,38 @@ use specs::prelude::*;
 #[derive(Component, Debug)]
 #[storage(VecStorage)]
 pub struct Position {
-    position: (f64, f64),
+    pub x: f64,
+    pub y: f64,
 }
 
 // rotational position of an entity
 #[derive(Component, Debug)]
 #[storage(VecStorage)]
 pub struct Rotation {
-    rotation: f32,
+    pub r: f64,
 }
 
 // absolute velocity of an entity
 #[derive(Component, Debug)]
 #[storage(VecStorage)]
 pub struct VelocityAbsolute {
-    speed: i32,
+    pub speed: i32,
 }
 
 // relative velovity of an entity
 #[derive(Component, Debug)]
 #[storage(VecStorage)]
 pub struct VelocityRelative {
-    movement_rel: (f64, f64),
-    movement_rot: (f64),
-    speed_rot: f64,
+    pub movement_rel: (f64, f64),
+    pub movement_rot: (f64),
+    pub speed_rot: f64,
 }
 
 #[derive(Component, Debug)]
 #[storage(VecStorage)]
 pub struct Sprite {
-    spritesheet: usize,
-    region: Rect,
+    pub spritesheet: usize,
+    pub region: Rect,
 }
 
 // TODO move this into a new file
