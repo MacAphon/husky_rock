@@ -5,23 +5,30 @@ use sdl2::rect::{Point, Rect};
 
 // TODO replace render function
 
-pub fn render(
+pub fn render_rectangle(
     canvas: &mut WindowCanvas,
     color: Color,
-    texture: &Texture,
-    position: Point,
-    sprite: Rect
+    position: (f64, f64),
+    size: (u32, u32)
 ) -> Result<(), String> {
-    canvas.set_draw_color(color);
-    canvas.clear();
-
     let (width, height) = canvas.output_size()?;
-    let screen_position = position + Point::new(width as i32 / 2, height as i32 / 2);
-    let screen_rect = Rect::from_center(screen_position, sprite.width(), sprite.height());
+    let screen_position = Point::new(width as i32 / 2 + position.0 as i32, height as i32 / 2 + position.1 as i32);
+    let screen_rect = Rect::from_center(screen_position, size.0, size.1);
 
-    canvas.copy(texture, sprite, screen_rect)?;
+    canvas.set_draw_color(color);
+    canvas.draw_rect(screen_rect);
 
     canvas.present();
 
+    Ok(())
+}
+
+pub fn clear_canvas(
+    canvas: &mut WindowCanvas,
+    color: Color,
+) -> Result<(), String> {
+    canvas.set_draw_color(color);
+    canvas.clear();
+    canvas.present();
     Ok(())
 }

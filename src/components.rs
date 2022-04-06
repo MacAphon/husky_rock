@@ -5,6 +5,13 @@ use sdl2::render::Texture;
 use specs_derive::Component;
 use specs::prelude::*;
 
+/**************************************************************************************************/
+// movement
+
+// is controlled by the player
+#[derive(Component, Debug, Default)]
+#[storage(NullStorage)]
+pub struct UserControlled;
 
 // position of an entity
 #[derive(Component, Debug)]
@@ -21,21 +28,22 @@ pub struct Rotation {
     pub r: f64,
 }
 
-// absolute velocity of an entity
+// velocity multipliers of an entity
 #[derive(Component, Debug)]
 #[storage(VecStorage)]
-pub struct VelocityAbsolute {
-    pub speed: i32,
+pub struct VelocityMultiplier {
+    pub speed: f64,
+    pub speed_rot: f64,
 }
 
-// relative velovity of an entity
+// relative velocity of an entity
 #[derive(Component, Debug)]
 #[storage(VecStorage)]
 pub struct VelocityRelative {
     pub movement_rel: (f64, f64),
-    pub movement_rot: (f64),
-    pub speed_rot: f64,
+    pub movement_rot: f64,
 }
+/**************************************************************************************************/
 
 #[derive(Component, Debug)]
 #[storage(VecStorage)]
