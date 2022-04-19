@@ -3,6 +3,11 @@ use sdl2::image::{self, LoadTexture, InitFlag};
 use sdl2::render::{Texture, WindowCanvas};
 use sdl2::rect::{Point, Rect};
 
+use specs::prelude::*;
+use specs::{AccessorCow, RunningTime};
+
+use crate::components::*;
+
 // TODO replace render function
 
 pub fn render_rectangle(
@@ -31,4 +36,20 @@ pub fn clear_canvas(
     canvas.clear();
     canvas.present();
     Ok(())
+}
+
+pub struct RenderMap;
+
+impl<'a> System<'a> for RenderMap {
+    type SystemData = (
+        ReadStorage<'a, RenderableMap>,
+        Write<'a, Canvas>,
+        ReadStorage<'a, Position>,
+    );
+
+    fn run(&mut self, (_, canv, pos): Self::SystemData) {
+        for (position, canvas) in (canv, pos).join() {
+            render_rectangle(canvas, Color::RGB(32, 32, 32), position, (8, 8))?;
+        }
+    }
 }

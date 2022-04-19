@@ -1,9 +1,18 @@
+use sdl2::rect::Rect;
+use sdl2::render::WindowCanvas;
 
-use sdl2::rect::{Point, Rect};
-use sdl2::render::Texture;
-
-use specs_derive::Component;
+use specs_derive::*;
 use specs::prelude::*;
+
+/**************************************************************************************************/
+// definitions
+
+pub enum PlayerInputCommand {
+    Forward(f64),
+    Sidewards(f64),
+    Rotate(f64),
+    // TODO add other player input as it is introduced
+}
 
 /**************************************************************************************************/
 // movement
@@ -43,7 +52,21 @@ pub struct VelocityRelative {
     pub movement_rel: (f64, f64),
     pub movement_rot: f64,
 }
+
+// input handling of the player
+#[derive(Default)]
+pub struct PlayerInput(pub Vec<PlayerInputCommand>);
 /**************************************************************************************************/
+// rendering
+
+// can be rendered on the map
+#[derive(Component, Debug, Default)]
+#[storage(NullStorage)]
+pub struct RenderableMap;
+
+// the window on which things are rendered
+#[derive(Default)]
+pub struct Canvas(pub WindowCanvas);
 
 #[derive(Component, Debug)]
 #[storage(VecStorage)]
@@ -51,46 +74,3 @@ pub struct Sprite {
     pub spritesheet: usize,
     pub region: Rect,
 }
-
-// TODO move this into a new file
-/*
-trait Entity {
-
-
-    fn cast_ray(){
-        /*
-        cast a ray in the map
-        used to:
-            - render the world
-            - check sightlines
-            - etc.
-         */
-        // TODO add cast ray function body
-    }
-
-    fn draw_map();
-
-    fn draw_viewport();
-}
-
-
-pub fn new_player(start_pos: (i32, i32, f64)) -> Player {
-    Player {
-        position: Point::new(start_pos.0, start_pos.1),
-        rotation: start_pos.2,
-        movement_rel: (0.0, 0.0, 0.0),
-        movement_abs: (0.0, 0.0),
-        speed: (0.0, 0.0)
-    }
-}
-
-
-impl Entity for Player {
-    fn draw_map() {
-        // TODO add draw map function body
-    }
-    fn draw_viewport() {
-        // TODO add draw viewport function body
-    }
-}
-*/

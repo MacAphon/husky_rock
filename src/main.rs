@@ -12,15 +12,10 @@ use sdl2::pixels::Color;
 use sdl2::image::{self, LoadTexture, InitFlag};
 
 use specs::prelude::*;
+use specs::WorldExt;
 
 use crate::components::*;
-
-pub enum PlayerInputCommand {
-    Forward,
-    Sidewards,
-    Rotate,
-    // TODO add other player input as it is introduced
-}
+use crate::render::RenderMap;
 
 fn main() -> Result<(), String> {
     /**********************************************************************************************/
@@ -52,22 +47,33 @@ fn main() -> Result<(), String> {
 
     // Set up the ECS
 
+    let mut world = World::new();
+    world.register::<UserControlled>();
+    world.register::<Position>();
+    world.register::<Rotation>();
+    world.register::<VelocityMultiplier>();
+    world.register::<VelocityRelative>();
+
     let mut dispatcher = DispatcherBuilder::new()
-        .with(physics::Physics, "Physics", &[])
         .with(input::Input, "Input", &[])
+        .with(physics::Physics, "Physics", &[])
+        .with_thread_local(RenderMap)
         // TODO add remaining systems
         .build();
 
-    let mut world = World::new();
     dispatcher.setup(&mut world);
 
     world.create_entity() // Player
         .with(UserControlled)
-        .with(Position(0., 0.)) // TODO read starting values from map
-        .with(Rotation(0.))
-        .with(VelocityMultiplier(32., 0.1))
-        .with(VelocityRelative((0., 0.), 0.))
+        .with(Position{x: 0., y: 0.}) // TODO read starting values from map
+        .with(Rotation{r: 0.})
+        .with(VelocityMultiplier{speed: 32., speed_rot: 0.1})
+        .with(VelocityRelative{movement_rel: (0., 0.), movement_rot: 0.})
+        .with(RenderableMap)
         .build();
+
+    world.insert(PlayerInput(Vec::new()));
+    world.insert(Canvas(canvas));
 
     // TODO create entities
 
@@ -76,59 +82,63 @@ fn main() -> Result<(), String> {
     // game loop
     'running: loop {
         let start_time = Instant::now();
-        let mut player_input: Vec<(PlayerInputCommand, f64)> = Vec::new();
+        {
+            let mut player_input: Vec<PlayerInputCommand> = Vec::new();
+            let mut player_input_resource = world.write_resource::<PlayerInput>();
 
-        // handle events
-        for event in event_pump.poll_iter() {
-            match event {
-                Event::Quit {..} |
-                Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
-                    break 'running;
-                },
+            // handle events
+            for event in event_pump.poll_iter() {
+                match event {
+                    Event::Quit { .. } |
+                    Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
+                        break 'running;
+                    },
 
-                Event::KeyDown {keycode: Some(Keycode::W), .. } => {
-                    player_input.push((PlayerInputCommand::Forward, 1.))
-                },
-                Event::KeyDown {keycode: Some(Keycode::A), .. } => {
-                    player_input.push((PlayerInputCommand::Sidewards, -1.))
-                },
-                Event::KeyDown {keycode: Some(Keycode::S), .. } => {
-                    player_input.push((PlayerInputCommand::Forward, -1.))
-                },
-                Event::KeyDown {keycode: Some(Keycode::D), .. } => {
-                    player_input.push((PlayerInputCommand::Sidewards, 1.))
-                },
-                Event::KeyDown {keycode: Some(Keycode::Right), .. } => {
-                    player_input.push((PlayerInputCommand::Rotate, 1.))
-                },
-                Event::KeyDown {keycode: Some(Keycode::Left), .. } => {
-                    player_input.push((PlayerInputCommand::Rotate, -1.))
-                },
+                    Event::KeyDown { keycode: Some(Keycode::W), .. } => {
+                        player_input.push(PlayerInputCommand::Forward(1.))
+                    },
+                    Event::KeyDown { keycode: Some(Keycode::A), .. } => {
+                        player_input.push(PlayerInputCommand::Sidewards(-1.))
+                    },
+                    Event::KeyDown { keycode: Some(Keycode::S), .. } => {
+                        player_input.push(PlayerInputCommand::Forward(-1.))
+                    },
+                    Event::KeyDown { keycode: Some(Keycode::D), .. } => {
+                        player_input.push(PlayerInputCommand::Sidewards(1.))
+                    },
+                    Event::KeyDown { keycode: Some(Keycode::Right), .. } => {
+                        player_input.push(PlayerInputCommand::Rotate(1.))
+                    },
+                    Event::KeyDown { keycode: Some(Keycode::Left), .. } => {
+                        player_input.push(PlayerInputCommand::Rotate(-1.))
+                    },
 
-                Event::KeyUp {keycode: Some(Keycode::W), .. } => {
-                    player_input.push((PlayerInputCommand::Forward, -1.))
-                },
-                Event::KeyUp {keycode: Some(Keycode::A), .. } => {
-                    player_input.push((PlayerInputCommand::Sidewards, 1.))
-                },
-                Event::KeyUp {keycode: Some(Keycode::S), .. } => {
-                    player_input.push((PlayerInputCommand::Forward, 1.))
-                },
-                Event::KeyUp {keycode: Some(Keycode::D), .. } => {
-                    player_input.push((PlayerInputCommand::Sidewards, -1.))
-                },
-                Event::KeyUp {keycode: Some(Keycode::Right), .. } => {
-                    player_input.push((PlayerInputCommand::Rotate, -1.))
-                },
-                Event::KeyUp {keycode: Some(Keycode::Left), .. } => {
-                    player_input.push((PlayerInputCommand::Rotate, 1.))
-                },
-                _ => {}
+                    Event::KeyUp { keycode: Some(Keycode::W), .. } => {
+                        player_input.push(PlayerInputCommand::Forward(-1.))
+                    },
+                    Event::KeyUp { keycode: Some(Keycode::A), .. } => {
+                        player_input.push(PlayerInputCommand::Sidewards(1.))
+                    },
+                    Event::KeyUp { keycode: Some(Keycode::S), .. } => {
+                        player_input.push(PlayerInputCommand::Forward(1.))
+                    },
+                    Event::KeyUp { keycode: Some(Keycode::D), .. } => {
+                        player_input.push(PlayerInputCommand::Sidewards(-1.))
+                    },
+                    Event::KeyUp { keycode: Some(Keycode::Right), .. } => {
+                        player_input.push(PlayerInputCommand::Rotate(-1.))
+                    },
+                    Event::KeyUp { keycode: Some(Keycode::Left), .. } => {
+                        player_input.push(PlayerInputCommand::Rotate(1.))
+                    },
+                    _ => {}
+                }
             }
-        }
-        world.insert(player_input);
 
-        // update
+            // update
+
+            *player_input_resource = PlayerInput(player_input);
+        }
 
         dispatcher.dispatch(&mut world);
         world.maintain();

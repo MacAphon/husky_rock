@@ -8,9 +8,11 @@ edition = "2018"
 
 [dependencies]
 #clap = { version = "3.1.6", features = ["derive"] }
+# ECS
 specs = "0.17.0"
 specs-derive = "0.4.1"
 
+# rendering, input
 [dependencies.sdl2] # for installation instructions go to https://github.com/Rust-SDL2/rust-sdl2/blob/master/README.md
 version = "0.35.2"
 default-features = false
