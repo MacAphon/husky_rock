@@ -15,7 +15,19 @@ use specs::prelude::*;
 use specs::WorldExt;
 
 use crate::components::*;
-use crate::render::RenderMap;
+use crate::render::*;
+
+fn initialize_player(world: &mut World) {
+    world.create_entity() // Player
+        .with(UserControlled)
+        .with(Position{x: 0., y: 0.}) // TODO read starting values from map
+        .with(Rotation{r: 0.})
+        .with(VelocityMultiplier{speed: 32., speed_rot: 0.1})
+        .with(VelocityRelative{movement_rel: (0., 0.), movement_rot: 0.})
+        .with(Renderable)
+        .with(IsPlayer)
+        .build();
+}
 
 fn main() -> Result<(), String> {
     /**********************************************************************************************/
@@ -53,27 +65,34 @@ fn main() -> Result<(), String> {
     world.register::<Rotation>();
     world.register::<VelocityMultiplier>();
     world.register::<VelocityRelative>();
+    world.register::<Renderable>();
+    world.register::<IsPlayer>();
+    world.register::<Sprite>();
 
     let mut dispatcher = DispatcherBuilder::new()
         .with(input::Input, "Input", &[])
         .with(physics::Physics, "Physics", &[])
-        .with_thread_local(RenderMap)
         // TODO add remaining systems
         .build();
 
     dispatcher.setup(&mut world);
 
-    world.create_entity() // Player
-        .with(UserControlled)
-        .with(Position{x: 0., y: 0.}) // TODO read starting values from map
-        .with(Rotation{r: 0.})
-        .with(VelocityMultiplier{speed: 32., speed_rot: 0.1})
-        .with(VelocityRelative{movement_rel: (0., 0.), movement_rot: 0.})
-        .with(RenderableMap)
-        .build();
+    initialize_player(&mut world);
 
     world.insert(PlayerInput(Vec::new()));
-    world.insert(Canvas(canvas));
+
+    // set up the map
+    // TODO add ability to load map from file
+    world.insert(LevelMap(vec![
+        vec![1,1,1,1,1,1,1,1],
+        vec![1,0,1,0,0,0,0,1],
+        vec![1,0,1,0,0,0,0,1],
+        vec![1,0,1,0,0,0,0,1],
+        vec![1,0,1,0,0,1,0,1],
+        vec![1,0,0,0,0,1,0,1],
+        vec![1,0,0,0,0,0,0,1],
+        vec![1,1,1,1,1,1,1,1],
+    ]));
 
     // TODO create entities
 
@@ -135,21 +154,14 @@ fn main() -> Result<(), String> {
                 }
             }
 
-            // update
-
             *player_input_resource = PlayerInput(player_input);
         }
-
+        // update
         dispatcher.dispatch(&mut world);
         world.maintain();
 
         // render
-        /*
-        render::clear_canvas(&mut canvas, Color::RGB(10, 10, 10));
-        render::render_rectangle(&mut canvas, Color::RGB(10, 255, 255), (64., -32.), (1, 100))?;
-        render::render_rectangle(&mut canvas, Color::RGB(255, 10, 255), (0., 0.), (50, 200))?;
-
-         */
+        render::render(&mut canvas, world.system_data())?;
 
         // time management
         ::std::thread::sleep(frame_time.saturating_sub(start_time.elapsed()));

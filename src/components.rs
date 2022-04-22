@@ -62,11 +62,17 @@ pub struct PlayerInput(pub Vec<PlayerInputCommand>);
 // can be rendered on the map
 #[derive(Component, Debug, Default)]
 #[storage(NullStorage)]
-pub struct RenderableMap;
+pub struct Renderable;
 
-// the window on which things are rendered
-#[derive(Default)]
-pub struct Canvas(pub WindowCanvas);
+// is the player, only to be used ONCE
+#[derive(Component, Debug, Default)]
+#[storage(NullStorage)]
+pub struct IsPlayer;
+
+// the level map
+#[derive(Component, Debug, Default)]
+#[storage(NullStorage)]
+pub struct LevelMap (pub Vec<Vec<i32>>);
 
 #[derive(Component, Debug)]
 #[storage(VecStorage)]
