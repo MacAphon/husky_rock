@@ -2,6 +2,8 @@ mod components;
 mod render;
 mod physics;
 mod input;
+mod rays;
+mod init;
 
 use std::time::{Duration, Instant};
 
@@ -16,18 +18,6 @@ use specs::WorldExt;
 
 use crate::components::*;
 use crate::render::*;
-
-fn initialize_player(world: &mut World) {
-    world.create_entity() // Player
-        .with(UserControlled)
-        .with(Position{x: 0., y: 0.}) // TODO read starting values from map
-        .with(Rotation{r: 0.})
-        .with(VelocityMultiplier{speed: 32., speed_rot: 0.1})
-        .with(VelocityRelative{movement_rel: (0., 0.), movement_rot: 0.})
-        .with(Renderable)
-        .with(IsPlayer)
-        .build();
-}
 
 fn main() -> Result<(), String> {
     /**********************************************************************************************/
@@ -53,7 +43,9 @@ fn main() -> Result<(), String> {
         .build()
         .expect("could not make a canvas");
 
+
     let texture_creator = canvas.texture_creator();
+    let texture = texture_creator.load_texture("assets/bricks_01.png")?;
 
     let mut event_pump = sdl_context.event_pump()?;
 
@@ -77,7 +69,7 @@ fn main() -> Result<(), String> {
 
     dispatcher.setup(&mut world);
 
-    initialize_player(&mut world);
+    init::initialize_player(&mut world);
 
     world.insert(PlayerInput(Vec::new()));
 
@@ -161,7 +153,7 @@ fn main() -> Result<(), String> {
         world.maintain();
 
         // render
-        render::render(&mut canvas, world.system_data())?;
+        render::render(&mut canvas, &texture, world.system_data())?;
 
         // time management
         ::std::thread::sleep(frame_time.saturating_sub(start_time.elapsed()));

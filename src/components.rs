@@ -6,7 +6,7 @@ use specs::prelude::*;
 
 /**************************************************************************************************/
 // definitions
-
+#[derive(Debug)]
 pub enum PlayerInputCommand {
     Forward(f64),
     Sidewards(f64),
@@ -21,6 +21,11 @@ pub enum PlayerInputCommand {
 #[derive(Component, Debug, Default)]
 #[storage(NullStorage)]
 pub struct UserControlled;
+
+// is controlled by AI
+#[derive(Component, Debug, Default)]
+#[storage(NullStorage)]
+pub struct HasAI;
 
 // position of an entity
 #[derive(Component, Debug)]
@@ -54,7 +59,7 @@ pub struct VelocityRelative {
 }
 
 // input handling of the player
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct PlayerInput(pub Vec<PlayerInputCommand>);
 /**************************************************************************************************/
 // rendering
@@ -64,15 +69,13 @@ pub struct PlayerInput(pub Vec<PlayerInputCommand>);
 #[storage(NullStorage)]
 pub struct Renderable;
 
+#[derive(Default, Debug)]
+pub struct LevelMap(pub Vec<Vec<u32>>);
+
 // is the player, only to be used ONCE
 #[derive(Component, Debug, Default)]
 #[storage(NullStorage)]
 pub struct IsPlayer;
-
-// the level map
-#[derive(Component, Debug, Default)]
-#[storage(NullStorage)]
-pub struct LevelMap (pub Vec<Vec<i32>>);
 
 #[derive(Component, Debug)]
 #[storage(VecStorage)]

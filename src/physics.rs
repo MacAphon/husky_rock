@@ -8,18 +8,20 @@ pub struct Physics;
 
 impl<'a> System<'a> for Physics {
     type SystemData = (
+        Read<'a, LevelMap>,
         WriteStorage<'a, Position>,
         WriteStorage<'a, Rotation>,
         ReadStorage<'a, VelocityRelative>,
     );
 
-    fn run(&mut self, (mut position, mut rotation, vel_rel): Self::SystemData) {
+    fn run(&mut self, ( lvl_map, mut position, mut rotation, vel_rel): Self::SystemData) {
+        let level = &lvl_map.0;
+        let level_size = level.len();
         for (
             position,
             rotation,
             vel_rel
-        )
-        in (&mut position, &mut rotation, &vel_rel).join() {
+        ) in (&mut position, &mut rotation, &vel_rel).join() {
 
             let movement_rot = vel_rel.movement_rot;
             let movement_rel = vel_rel.movement_rel;
@@ -31,7 +33,7 @@ impl<'a> System<'a> for Physics {
                 rot -= TAU;
             }
 
-            let mut movement_abs: (f64, f64) = (
+            let movement_abs: (f64, f64) = (
                 movement_rel.0 * rot.cos() + movement_rel.1 * rot.sin(),
                 movement_rel.1 * rot.cos() - movement_rel.0 * rot.sin(),
             );
@@ -41,7 +43,19 @@ impl<'a> System<'a> for Physics {
                 position.y + movement_abs.1
             );
 
-            // TODO add checks for collision and out of bounds
+            // keep the entity in the map
+            if pos.0 <= 0. {
+                pos.0 = 0.;
+            } else if pos.0 >= (level_size << 6) as f64 {
+                pos.0 = (level_size << 6) as f64;
+            }
+            if pos.1 <= 0. {
+                pos.1 = 0.;
+            } else if pos.1 >= (level_size << 6) as f64 {
+                pos.1 = (level_size << 6) as f64;
+            }
+
+            // TODO add checks for collision
 
             rotation.r = rot;
             position.x = pos.0;
