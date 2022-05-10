@@ -1,11 +1,20 @@
+use std::f64::consts::{PI, TAU};
+
 use sdl2::rect::Rect;
 use sdl2::render::WindowCanvas;
 
-use specs_derive::*;
 use specs::prelude::*;
+use specs_derive::*;
 
 /**************************************************************************************************/
 // definitions
+const PI_HALFS: f64 = PI / 2.;
+
+pub enum WallDirection {
+    Horizontal,
+    Vertical,
+}
+
 #[derive(Debug)]
 pub enum PlayerInputCommand {
     Forward(f64),

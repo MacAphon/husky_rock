@@ -1,17 +1,17 @@
 mod components;
-mod render;
-mod physics;
-mod input;
-mod rays;
 mod init;
+mod input;
+mod physics;
+mod rays;
+mod render;
 
 use std::time::{Duration, Instant};
 
 use sdl2::event::Event;
+use sdl2::image::{self, InitFlag, LoadTexture};
 use sdl2::keyboard::Keycode;
-use sdl2::rect::{Point, Rect};
 use sdl2::pixels::Color;
-use sdl2::image::{self, LoadTexture, InitFlag};
+use sdl2::rect::{Point, Rect};
 
 use specs::prelude::*;
 use specs::WorldExt;
@@ -42,7 +42,6 @@ fn main() -> Result<(), String> {
         .into_canvas()
         .build()
         .expect("could not make a canvas");
-
 
     let texture_creator = canvas.texture_creator();
     let texture = texture_creator.load_texture("assets/bricks_01.png")?;
@@ -76,19 +75,23 @@ fn main() -> Result<(), String> {
     // set up the map
     // TODO add ability to load map from file
     world.insert(LevelMap(vec![
-        vec![1,1,1,1,1,1,1,1],
-        vec![1,0,1,0,0,0,0,1],
-        vec![1,0,1,0,0,0,0,1],
-        vec![1,0,1,0,0,0,0,1],
-        vec![1,0,1,0,0,1,0,1],
-        vec![1,0,0,0,0,1,0,1],
-        vec![1,0,0,0,0,0,0,1],
-        vec![1,1,1,1,1,1,1,1],
+        vec![1, 1, 1, 1, 1, 1, 1, 1],
+        vec![1, 0, 2, 0, 0, 0, 0, 1],
+        vec![1, 0, 2, 0, 0, 0, 0, 1],
+        vec![1, 0, 2, 0, 0, 0, 0, 1],
+        vec![1, 0, 2, 0, 0, 2, 0, 1],
+        vec![1, 0, 0, 0, 0, 2, 0, 1],
+        vec![1, 0, 0, 0, 0, 0, 0, 1],
+        vec![1, 1, 1, 1, 1, 1, 1, 1],
     ]));
 
     // TODO create entities
 
-    let frame_time = Duration::from_millis(1000/60); // for 60 fps
+    // pre-loop setup
+    let frame_time = Duration::from_millis(1000 / 60); // for 60 fps
+
+    // W A S D -> <-
+    let mut pressed_keys = [0, 0, 0, 0, 0, 0];
     /**********************************************************************************************/
     // game loop
     'running: loop {
@@ -100,48 +103,123 @@ fn main() -> Result<(), String> {
             // handle events
             for event in event_pump.poll_iter() {
                 match event {
-                    Event::Quit { .. } |
-                    Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
+                    Event::Quit { .. }
+                    | Event::KeyDown {
+                        keycode: Some(Keycode::Escape),
+                        ..
+                    } => {
                         break 'running;
-                    },
+                    }
 
-                    Event::KeyDown { keycode: Some(Keycode::W), .. } => {
-                        player_input.push(PlayerInputCommand::Forward(1.))
-                    },
-                    Event::KeyDown { keycode: Some(Keycode::A), .. } => {
-                        player_input.push(PlayerInputCommand::Sidewards(-1.))
-                    },
-                    Event::KeyDown { keycode: Some(Keycode::S), .. } => {
-                        player_input.push(PlayerInputCommand::Forward(-1.))
-                    },
-                    Event::KeyDown { keycode: Some(Keycode::D), .. } => {
-                        player_input.push(PlayerInputCommand::Sidewards(1.))
-                    },
-                    Event::KeyDown { keycode: Some(Keycode::Right), .. } => {
-                        player_input.push(PlayerInputCommand::Rotate(1.))
-                    },
-                    Event::KeyDown { keycode: Some(Keycode::Left), .. } => {
-                        player_input.push(PlayerInputCommand::Rotate(-1.))
-                    },
+                    Event::KeyDown {
+                        keycode: Some(Keycode::W),
+                        ..
+                    } => {
+                        if pressed_keys[0] == 0 {
+                            player_input.push(PlayerInputCommand::Forward(1.));
+                            pressed_keys[0] = 1;
+                        }
+                    }
+                    Event::KeyDown {
+                        keycode: Some(Keycode::A),
+                        ..
+                    } => {
+                        if pressed_keys[1] == 0 {
+                            player_input.push(PlayerInputCommand::Sidewards(-1.));
+                            pressed_keys[1] = 1;
+                        }
+                    }
+                    Event::KeyDown {
+                        keycode: Some(Keycode::S),
+                        ..
+                    } => {
+                        if pressed_keys[2] == 0 {
+                            player_input.push(PlayerInputCommand::Forward(-1.));
+                            pressed_keys[2] = 1;
+                        }
+                    }
+                    Event::KeyDown {
+                        keycode: Some(Keycode::D),
+                        ..
+                    } => {
+                        if pressed_keys[3] == 0 {
+                            player_input.push(PlayerInputCommand::Sidewards(1.));
+                            pressed_keys[3] = 1;
+                        }
+                    }
+                    Event::KeyDown {
+                        keycode: Some(Keycode::Right),
+                        ..
+                    } => {
+                        if pressed_keys[4] == 0 {
+                            player_input.push(PlayerInputCommand::Rotate(-1.));
+                            pressed_keys[4] = 1;
+                        }
+                    }
+                    Event::KeyDown {
+                        keycode: Some(Keycode::Left),
+                        ..
+                    } => {
+                        if pressed_keys[5] == 0 {
+                            player_input.push(PlayerInputCommand::Rotate(1.));
+                            pressed_keys[5] = 1;
+                        }
+                    }
 
-                    Event::KeyUp { keycode: Some(Keycode::W), .. } => {
-                        player_input.push(PlayerInputCommand::Forward(-1.))
-                    },
-                    Event::KeyUp { keycode: Some(Keycode::A), .. } => {
-                        player_input.push(PlayerInputCommand::Sidewards(1.))
-                    },
-                    Event::KeyUp { keycode: Some(Keycode::S), .. } => {
-                        player_input.push(PlayerInputCommand::Forward(1.))
-                    },
-                    Event::KeyUp { keycode: Some(Keycode::D), .. } => {
-                        player_input.push(PlayerInputCommand::Sidewards(-1.))
-                    },
-                    Event::KeyUp { keycode: Some(Keycode::Right), .. } => {
-                        player_input.push(PlayerInputCommand::Rotate(-1.))
-                    },
-                    Event::KeyUp { keycode: Some(Keycode::Left), .. } => {
-                        player_input.push(PlayerInputCommand::Rotate(1.))
-                    },
+                    Event::KeyUp {
+                        keycode: Some(Keycode::W),
+                        ..
+                    } => {
+                        if pressed_keys[0] == 1 {
+                            player_input.push(PlayerInputCommand::Forward(-1.));
+                            pressed_keys[0] = 0;
+                        }
+                    }
+                    Event::KeyUp {
+                        keycode: Some(Keycode::A),
+                        ..
+                    } => {
+                        if pressed_keys[1] == 1 {
+                            player_input.push(PlayerInputCommand::Sidewards(1.));
+                            pressed_keys[1] = 0;
+                        }
+                    }
+                    Event::KeyUp {
+                        keycode: Some(Keycode::S),
+                        ..
+                    } => {
+                        if pressed_keys[2] == 1 {
+                            player_input.push(PlayerInputCommand::Forward(1.));
+                            pressed_keys[2] = 0;
+                        }
+                    }
+                    Event::KeyUp {
+                        keycode: Some(Keycode::D),
+                        ..
+                    } => {
+                        if pressed_keys[3] == 1 {
+                            player_input.push(PlayerInputCommand::Sidewards(-1.));
+                            pressed_keys[3] = 0;
+                        }
+                    }
+                    Event::KeyUp {
+                        keycode: Some(Keycode::Right),
+                        ..
+                    } => {
+                        if pressed_keys[4] == 1 {
+                            player_input.push(PlayerInputCommand::Rotate(1.));
+                            pressed_keys[4] = 0;
+                        }
+                    }
+                    Event::KeyUp {
+                        keycode: Some(Keycode::Left),
+                        ..
+                    } => {
+                        if pressed_keys[5] == 1 {
+                            player_input.push(PlayerInputCommand::Rotate(-1.));
+                            pressed_keys[5] = 0;
+                        }
+                    }
                     _ => {}
                 }
             }
