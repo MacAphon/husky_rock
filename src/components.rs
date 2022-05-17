@@ -1,7 +1,7 @@
 use std::f64::consts::{PI, TAU};
 
 use sdl2::rect::Rect;
-use sdl2::render::WindowCanvas;
+use sdl2::render::{Texture, WindowCanvas};
 
 use specs::prelude::*;
 use specs_derive::*;
@@ -10,6 +10,7 @@ use specs_derive::*;
 // definitions
 const PI_HALFS: f64 = PI / 2.;
 
+#[derive(Debug, PartialEq)]
 pub enum WallDirection {
     Horizontal,
     Vertical,
@@ -86,9 +87,14 @@ pub struct LevelMap(pub Vec<Vec<u32>>);
 #[storage(NullStorage)]
 pub struct IsPlayer;
 
+// is an entity, NOT THE PLAYER
+#[derive(Component, Debug, Default)]
+#[storage(NullStorage)]
+pub struct IsEntity;
+
 #[derive(Component, Debug)]
 #[storage(VecStorage)]
 pub struct Sprite {
     pub spritesheet: usize,
-    pub region: Rect,
+    pub region: (i32, i32),
 }

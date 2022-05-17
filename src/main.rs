@@ -12,6 +12,7 @@ use sdl2::image::{self, InitFlag, LoadTexture};
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::rect::{Point, Rect};
+use sdl2::render::Texture;
 
 use specs::prelude::*;
 use specs::WorldExt;
@@ -44,7 +45,9 @@ fn main() -> Result<(), String> {
         .expect("could not make a canvas");
 
     let texture_creator = canvas.texture_creator();
-    let texture = texture_creator.load_texture("assets/bricks_01.png")?;
+    let mut textures: Vec<Texture> = Vec::new();
+    textures.push(texture_creator.load_texture("assets/bricks_01.png")?);
+    textures.push(texture_creator.load_texture("assets/lamp_01.png")?);
 
     let mut event_pump = sdl_context.event_pump()?;
 
@@ -56,8 +59,8 @@ fn main() -> Result<(), String> {
     world.register::<Rotation>();
     world.register::<VelocityMultiplier>();
     world.register::<VelocityRelative>();
-    world.register::<Renderable>();
     world.register::<IsPlayer>();
+    world.register::<IsEntity>();
     world.register::<Sprite>();
 
     let mut dispatcher = DispatcherBuilder::new()
@@ -69,20 +72,31 @@ fn main() -> Result<(), String> {
     dispatcher.setup(&mut world);
 
     init::initialize_player(&mut world);
+    for i in (128..769).step_by(64) {
+        init::initialize_world_object(&mut world, (65., i as f64));
+    }
 
     world.insert(PlayerInput(Vec::new()));
 
     // set up the map
     // TODO add ability to load map from file
     world.insert(LevelMap(vec![
-        vec![1, 1, 1, 1, 1, 1, 1, 1],
-        vec![1, 0, 2, 0, 0, 0, 0, 1],
-        vec![1, 0, 2, 0, 0, 0, 0, 1],
-        vec![1, 0, 2, 0, 0, 0, 0, 1],
-        vec![1, 0, 2, 0, 0, 2, 0, 1],
-        vec![1, 0, 0, 0, 0, 2, 0, 1],
-        vec![1, 0, 0, 0, 0, 0, 0, 1],
-        vec![1, 1, 1, 1, 1, 1, 1, 1],
+        vec![1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        vec![1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        vec![1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        vec![1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        vec![1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        vec![1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        vec![1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        vec![1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        vec![1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        vec![1, 0, 0, 0, 0, 0, 0, 1, 0, 2, 2, 2, 2, 2, 0, 1],
+        vec![1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
+        vec![1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
+        vec![1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
+        vec![1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
+        vec![1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
+        vec![1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     ]));
 
     // TODO create entities
@@ -231,7 +245,7 @@ fn main() -> Result<(), String> {
         world.maintain();
 
         // render
-        render::render(&mut canvas, &texture, world.system_data())?;
+        render::render(&mut canvas, &textures, world.system_data(), world.system_data())?;
 
         // time management
         ::std::thread::sleep(frame_time.saturating_sub(start_time.elapsed()));

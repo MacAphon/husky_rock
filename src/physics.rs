@@ -56,8 +56,25 @@ impl<'a> System<'a> for Physics {
                 pos.1 = (level_size << 6) as f64;
             }
 
-            // TODO add checks for collision
+            // collision checks
+            // left
+            if level[pos.1 as usize >> 6][(pos.0 - 8.) as usize >> 6] != 0 {
+                pos.0 += pos.0 - ((pos.0 as usize >> 6) << 6) as f64;
+            }
+            // right
+            if level[pos.1 as usize >> 6][(pos.0 + 8.) as usize >> 6] != 0 {
+                pos.0 += ((pos.0 as usize >> 6) << 6) as f64 - pos.0;
+            }
+            // up
+            if level[(pos.1 - 8.) as usize >> 6][pos.0 as usize >> 6] != 0 {
+                pos.1 += pos.1 - ((pos.1 as usize >> 6) << 6) as f64;
+            }
+            // down
+            if level[(pos.1 + 8.) as usize >> 6][pos.0 as usize >> 6] != 0 {
+                pos.1 += ((pos.1 as usize >> 6) << 6) as f64 - pos.1;
+            }
 
+            // update position and rotation
             rotation.r = rot;
             position.x = pos.0;
             position.y = pos.1;

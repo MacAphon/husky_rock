@@ -13,19 +13,28 @@ use crate::rays;
 use crate::rays::*;
 
 const PI_HALFS: f64 = PI / 2.;
+const FOV: f64 = 2.;
 
-pub type SystemData<'a> = (
+pub type SystemDataPl<'a> = (
     ReadStorage<'a, Position>,
     ReadStorage<'a, Rotation>,
     ReadStorage<'a, IsPlayer>,
     Read<'a, LevelMap>,
 );
 
+pub type SystemDataEN<'a> = (
+    ReadStorage<'a, Position>,
+    ReadStorage<'a, Sprite>,
+    ReadStorage<'a, IsEntity>,
+);
+
 pub fn render(
     canvas: &mut WindowCanvas,
-    wall_texture: &Texture,
-    (pos, rot, _, level_map): SystemData,
+    textures: &Vec<Texture>,
+    (pos, rot, ipl, level_map): SystemDataPl,
+    (pos_en, spr, ien): SystemDataEN,
 ) -> Result<(), String> {
+    let wall_texture = &textures[0];
     let n = 800;
     // Clear the screen.
     canvas.set_draw_color(Color::RGB(127, 127, 127));
@@ -33,17 +42,60 @@ pub fn render(
 
     render_rectangle(canvas, Color::RGB(127, 127, 255), (0., -150.), (800, 300))?;
 
-    for (pos, rot) in (&pos, &rot).join() {
-        let mut rays = multi_cast_ray((pos.x, pos.y), rot.r, PI_HALFS, n, &level_map);
-        rays.sort_by(|a, b| a.0 .0.partial_cmp(&b.0 .0).unwrap());
+    for (pos, rot, _) in (&pos, &rot, &ipl).join() {
+        let mut entities: Vec<(f64, f64, f64, (f64, f64), usize, (i32, i32))> = Vec::new(); // dist, x, y, vp_pos, spritesheet, region
+        let mut dist: f64;
+        for (pos_en_i, spr_i) in (&pos_en, &spr).join() {
+            dist = (pos.x - pos_en_i.x).hypot(pos.y - pos_en_i.y);
+            entities.push((dist, pos_en_i.x, pos_en_i.y, vp_pos_h(&pos_en_i, &pos, &rot), spr_i.spritesheet, spr_i.region));
+        }
+        entities.sort_by(|b, a| a.0.partial_cmp(&b.0).unwrap());
+
+        let rays = multi_cast_ray((pos.x, pos.y), rot.r, FOV, n, &level_map);
+        let mut rendered_rays: Vec<bool> = vec![false; (n+1) as usize];
+        for entity in entities {
+            for ray in &rays {
+                if rendered_rays[ray.1 as usize] { continue }
+                else if ray.0.0 < entity.0 { continue }
+                let v_size = ((1. / (ray.0.0 + 0.001)) * 25000. * (-ray.2.cos() + 2.) ) as u32;
+                let sprite_offset: (i32, i32) = match ray.0.3 {
+                    WallDirection::Vertical => {
+                        ((ray.0.4 as i32 - 1) * 32 + ray.0.2 as i32 % 64 / 2, 0)
+                    }
+                    WallDirection::Horizontal => {
+                        ((ray.0.4 as i32 - 1) * 32 + ray.0.1 as i32 % 64 / 2, 32)
+                    }
+                };
+                let render_x_offset = ray.1 as f64 - 400.;
+                render_sprite(
+                    canvas,
+                    wall_texture,
+                    (sprite_offset.0, sprite_offset.1),
+                    (1, 32),
+                    (render_x_offset, 0.),
+                    (1, v_size),
+                )?;
+                rendered_rays[ray.1 as usize] = true;
+            }
+            //render_rectangle(canvas, Color::RGB(255, 0, 0), (entity.3, 0.), ((10000./entity.0) as u32, (10000./entity.0) as u32 ))?;
+            render_sprite(
+                canvas,
+                &textures[entity.4],
+                (entity.5),
+                (32, 32),
+                (entity.3.0, 0.),
+                ((27000./entity.0) as u32, (27000./entity.0) as u32 )
+            )?;
+        }
         for ray in &rays {
-            let v_size = ((1. / (ray.0 .0 + 0.001)) * 25000. * (-ray.2.cos() + 2.)) as u32;
-            let sprite_offset: (i32, i32) = match ray.0 .3 {
+            if rendered_rays[ray.1 as usize] { continue }
+            let v_size = ((1. / (ray.0.0 + 0.001)) * 25000. * (-ray.2.cos() + 2.) ) as u32;
+            let sprite_offset: (i32, i32) = match ray.0.3 {
                 WallDirection::Vertical => {
-                    ((ray.0 .4 as i32 - 1) * 32 + ray.0 .2 as i32 % 64 / 2, 0)
+                    ((ray.0.4 as i32 - 1) * 32 + ray.0.2 as i32 % 64 / 2, 0)
                 }
                 WallDirection::Horizontal => {
-                    ((ray.0 .4 as i32 - 1) * 32 + ray.0 .1 as i32 % 64 / 2, 32)
+                    ((ray.0.4 as i32 - 1) * 32 + ray.0.1 as i32 % 64 / 2, 32)
                 }
             };
             let render_x_offset = ray.1 as f64 - 400.;
@@ -55,17 +107,25 @@ pub fn render(
                 (render_x_offset, 0.),
                 (1, v_size),
             )?;
+            rendered_rays[ray.1 as usize] = true;
         }
         /*
         // debug rendering on top
+        canvas.set_draw_color(Color::RGB(255, 0, 255));
+        // vertical line in the middle of the screen
+        canvas.draw_line(
+            Point::new(400, 0),
+            Point::new(400, 600),
+        )?;
+        // top-down perspective of the rays
         for ray in &rays {
             canvas.set_draw_color(match ray.0 .3 {
                 WallDirection::Vertical => Color::RGB(0, 255, 0),
                 WallDirection::Horizontal => Color::RGB(0, 180, 0),
             });
             canvas.draw_line(
-                Point::new(pos.x as i32, pos.y as i32),
-                Point::new(ray.0 .1 as i32, ray.0 .2 as i32),
+                Point::new((pos.x/2.) as i32, (pos.y/2.) as i32),
+                Point::new((ray.0 .1/2.) as i32, (ray.0 .2/2.) as i32),
             )?;
         }
          */
@@ -121,4 +181,18 @@ fn render_sprite(
         ),
     )?;
     Ok(())
+}
+
+fn vp_pos_h(pos_e: &Position, pos_p: &Position, r_p: &Rotation) -> (f64, f64) {
+    let mut dx = pos_p.x - pos_e.x;
+    if dx == 0. {dx += 0.001}
+    let mut dy = pos_p.y - pos_e.y;
+
+    let abs_angle = (dy/dx).atan();
+    let mut rel_angle = r_p.r + abs_angle;
+    if dx <= 0. { rel_angle += PI }
+    while rel_angle > PI { rel_angle -= TAU }
+    while rel_angle < -PI { rel_angle += TAU}
+
+    ((rel_angle/FOV) * 800., rel_angle)
 }

@@ -9,6 +9,8 @@ use crate::components::*;
 use specs::prelude::*;
 use specs::{AccessorCow, RunningTime};
 
+const PI_HALFS: f64 = PI / 2.;
+
 pub type SystemData<'a> = Read<'a, LevelMap>;
 
 pub fn cast_ray(
