@@ -34,7 +34,7 @@ pub fn initialize_world_object(world: &mut World, pos: (i32, i32)) {
 pub fn initialize_enemy(world: &mut World, pos: (i32, i32)) {
     world
         .create_entity()
-        .with(Position { x: (pos.0 * 64 + 32) as f64, y: (pos.1 * 64 + 32) as f64 })
+        .with(Position { x: ((pos.0 * 64) + 32) as f64, y: ((pos.1 * 64) + 32) as f64 })
         .with(Sprite {spritesheet: 2, region: (0, 0)})
         .with(IsEntity)
         .with(VelocityMultiplier {

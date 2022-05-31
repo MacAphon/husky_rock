@@ -1,6 +1,6 @@
 [package]
 name = "husky_rock"
-version = "0.1.0"
+version = "1.0.0"
 authors = ["Christian Korn <c.a.korn@gmx.de>"]
 edition = "2018"
 
