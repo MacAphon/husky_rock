@@ -1,14 +1,8 @@
-use std::f64::consts::{PI, TAU};
-
-use sdl2::rect::Rect;
-use sdl2::render::{Texture, WindowCanvas};
-
 use specs::prelude::*;
 use specs_derive::*;
 
 /**************************************************************************************************/
 // definitions
-const PI_HALFS: f64 = PI / 2.;
 
 #[derive(Debug, PartialEq)]
 pub enum WallDirection {
@@ -34,8 +28,11 @@ pub struct UserControlled;
 
 // is controlled by AI
 #[derive(Component, Debug, Default)]
-#[storage(NullStorage)]
-pub struct HasAI;
+#[storage(VecStorage)]
+pub struct HasAI {
+    pub time_to_next_update: i32,
+    pub path: Vec<(usize, usize)>,
+}
 
 // position of an entity
 #[derive(Component, Debug)]
@@ -71,6 +68,10 @@ pub struct VelocityRelative {
 // input handling of the player
 #[derive(Default, Debug)]
 pub struct PlayerInput(pub Vec<PlayerInputCommand>);
+
+// position of the Player
+#[derive(Default, Debug)]
+pub struct PlayerPosition(pub (f64, f64));
 /**************************************************************************************************/
 // rendering
 

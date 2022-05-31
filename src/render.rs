@@ -1,18 +1,14 @@
 use std::f64::consts::{PI, TAU};
 
-use sdl2::image::{self, InitFlag, LoadTexture};
 use sdl2::pixels::Color;
 use sdl2::rect::{Point, Rect};
 use sdl2::render::{Texture, WindowCanvas};
 
 use specs::prelude::*;
-use specs::{AccessorCow, RunningTime};
 
 use crate::components::*;
-use crate::rays;
 use crate::rays::*;
 
-const PI_HALFS: f64 = PI / 2.;
 const FOV: f64 = 2.;
 
 pub type SystemDataPl<'a> = (
@@ -25,14 +21,13 @@ pub type SystemDataPl<'a> = (
 pub type SystemDataEN<'a> = (
     ReadStorage<'a, Position>,
     ReadStorage<'a, Sprite>,
-    ReadStorage<'a, IsEntity>,
 );
 
 pub fn render(
     canvas: &mut WindowCanvas,
     textures: &Vec<Texture>,
     (pos, rot, ipl, level_map): SystemDataPl,
-    (pos_en, spr, ien): SystemDataEN,
+    (pos_en, spr): SystemDataEN,
 ) -> Result<(), String> {
     let wall_texture = &textures[0];
     let n = 800;
@@ -53,7 +48,7 @@ pub fn render(
 
         let rays = multi_cast_ray((pos.x, pos.y), rot.r, FOV, n, &level_map);
         let mut rendered_rays: Vec<bool> = vec![false; (n+1) as usize];
-        for entity in entities {
+        for entity in &entities {
             for ray in &rays {
                 if rendered_rays[ray.1 as usize] { continue }
                 else if ray.0.0 < entity.0 { continue }
@@ -81,7 +76,7 @@ pub fn render(
             render_sprite(
                 canvas,
                 &textures[entity.4],
-                (entity.5),
+                entity.5,
                 (32, 32),
                 (entity.3.0, 0.),
                 ((27000./entity.0) as u32, (27000./entity.0) as u32 )
@@ -109,15 +104,13 @@ pub fn render(
             )?;
             rendered_rays[ray.1 as usize] = true;
         }
-        /*
+
+        /******************************************************************************************/
         // debug rendering on top
-        canvas.set_draw_color(Color::RGB(255, 0, 255));
-        // vertical line in the middle of the screen
-        canvas.draw_line(
-            Point::new(400, 0),
-            Point::new(400, 600),
-        )?;
+
+        /*
         // top-down perspective of the rays
+        canvas.set_draw_color(Color::RGB(255, 0, 255));
         for ray in &rays {
             canvas.set_draw_color(match ray.0 .3 {
                 WallDirection::Vertical => Color::RGB(0, 255, 0),
@@ -129,12 +122,51 @@ pub fn render(
             )?;
         }
          */
+
+        /*
+        // map
+        for (y, yv) in level_map.0.iter().enumerate() {
+            for (x, xv) in yv.iter().enumerate() {
+                if *xv != 0 {
+                    render_rectangle_abs(
+                        canvas,
+                        Color::RGB(255, 0, 255),
+                        ((x*32) as f64 + 16., (y*32) as f64 + 16.),
+                        (30, 30),
+                    )?;
+                }
+            }
+        }
+
+         */
+
+        /*
+        // positions of entities
+        for entity in &entities {
+            render_rectangle_abs(canvas, Color::RGB(255, 255, 0), (entity.1/2., entity.2/2.), (5, 5))?;
+        }
+
+         */
+
+        /*
+        // position of the player
+        render_rectangle_abs(canvas, Color::RGB(255, 255, 127), (pos.x/2.,pos.y/2.), (7, 7))?;
+
+         */
+        /*
+        // vertical line in the middle of the screen
+        canvas.draw_line(
+            Point::new(400, 0),
+            Point::new(400, 600),
+        )?;
+         */
     }
 
     canvas.present();
     Ok(())
 }
 
+/// Draws a rectangle with the given color on the given position on the screen from the center
 fn render_rectangle(
     canvas: &mut WindowCanvas,
     color: Color,
@@ -154,6 +186,27 @@ fn render_rectangle(
     Ok(())
 }
 
+/// Same as above, except the position on the screen is absolute (from the top-left corner)
+/// Used for debugging
+fn render_rectangle_abs(
+    canvas: &mut WindowCanvas,
+    color: Color,
+    position: (f64, f64),
+    size: (u32, u32),
+) -> Result<(), String> {
+    canvas.set_draw_color(color);
+    canvas.fill_rect(Rect::from_center(
+        Point::new(
+            position.0 as i32,
+            position.1 as i32,
+        ),
+        size.0,
+        size.1,
+    ))?;
+    Ok(())
+}
+
+/// Draws a sprite from the given texture to the screen from the center
 fn render_sprite(
     canvas: &mut WindowCanvas,
     texture: &Texture,
@@ -183,14 +236,13 @@ fn render_sprite(
     Ok(())
 }
 
+/// Calculate the horizontal position of an entity on the viewport
 fn vp_pos_h(pos_e: &Position, pos_p: &Position, r_p: &Rotation) -> (f64, f64) {
-    let mut dx = pos_p.x - pos_e.x;
-    if dx == 0. {dx += 0.001}
-    let mut dy = pos_p.y - pos_e.y;
+    let dx = pos_p.x - pos_e.x;
+    let dy = pos_p.y - pos_e.y;
 
-    let abs_angle = (dy/dx).atan();
+    let abs_angle = dy.atan2(dx);
     let mut rel_angle = r_p.r + abs_angle;
-    if dx <= 0. { rel_angle += PI }
     while rel_angle > PI { rel_angle -= TAU }
     while rel_angle < -PI { rel_angle += TAU}
 

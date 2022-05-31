@@ -1,24 +1,18 @@
 use std::f64::consts::{PI, TAU};
 
-use sdl2::image::{self, InitFlag, LoadTexture};
-use sdl2::pixels::Color;
-use sdl2::rect::{Point, Rect};
-use sdl2::render::{Texture, WindowCanvas};
-
 use crate::components::*;
 use specs::prelude::*;
-use specs::{AccessorCow, RunningTime};
 
 const PI_HALFS: f64 = PI / 2.;
 
 pub type SystemData<'a> = Read<'a, LevelMap>;
 
+/// calculates the distance to the nearest wall
 pub fn cast_ray(
     start: (f64, f64),
     mut angle: f64,
-    data: &SystemData,
+    level: &Vec<Vec<u32>>,
 ) -> (f64, f64, f64, WallDirection, u32) {
-    let level = &data.0;
     let level_size = level.len();
     let mut h_is_0 = false;
     let mut v_is_0 = false;
@@ -185,7 +179,7 @@ pub fn multi_cast_ray(
     let mut current_angle = angle + fov / 2.;
     let delta_angle = fov / n as f64;
     for i in 0..n + 1 {
-        ret_data.push((cast_ray(start, current_angle, data), i, angle-current_angle));
+        ret_data.push((cast_ray(start, current_angle, &data.0), i, angle-current_angle));
         current_angle -= delta_angle;
     }
     ret_data

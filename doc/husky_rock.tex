@@ -3,34 +3,112 @@
 \author{Christian Korn}
 \date{14.01.2022 - 04.06.2022}
 
+\usepackage[utf8]{inputenc}
 \usepackage[ngerman]{babel}
 
+\tolerance=1
+\emergencystretch=\maxdimen
+\hyphenpenalty=10000
+\hbadness=10000
+
 \begin{document}
-	\maketitle
-	\tableofcontents
-	
-	\newpage
-	
-	\section{Quellen}
-	
-	\begin{itemize}
-		\item Viel Code wurde direkt vom Vorgängerprojekt zu Rust übersetzt und wiederverwendet. \\
-		\verb|https://github.com/MacAphon/hundefels2d|
-		
-		\item Steve Klabnik \& Carol Nichols: ``The Rust Programming Language'' \\
-		\verb|https://doc.rust-lang.org/stable/book/|
-		
-		\item ``Rust by Example'' \\
-		\verb|https://doc.rust-lang.org/rust-by-example/|
-		
-		\item ``Rust Coockbook'' \\
-		\verb|https://rust-lang-nursery.github.io/rust-cookbook/|
-		
-		\item ``Learn Game Development in Rust'' \\
-		\verb|https://sunjay.dev/learn-game-dev| \\
-		\verb|https://github.com/sunjay/rust-simple-game-dev-tutorial/|
-		
-		\item 3DSage: ``Make Your Own Raycaster Part 1'' \\ \verb|https://youtu.be/gYRrGTC7GtA|\\ 
-		Quellcode verfügbar unter \verb|https://github.com/3DSage/OpenGL-Raycaster\_v1|
-	\end{itemize}
+    \maketitle
+    \tableofcontents
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    \newpage
+    
+    \section{Ziele}
+    
+    \subsection{Muss-Ziele}
+    
+    \subsubsection*{Hundefels}
+    
+    Das neue Projekt muss die Kernfunktionalität des Vorgängerprojektes enthalten:
+    
+    \begin{itemize}
+        \item Anzeigen eines 2D Levels in 2,5D per Raycasting
+        \item Bewegungsfreiheit im Level
+        \item Anzeige von Entities im Level
+        \item Kollisionserkennung
+    \end{itemize}
+    
+    \subsubsection*{Neues}
+    
+    Natürlich soll das neue Projekt auch eigene Features und Technologien enthalten, die es vom Alten unterscheiden:
+    
+    \begin{itemize}
+        \item Wand-Texturen
+        \item Sprites für Entities
+        \item KI für Entities
+    \end{itemize}
+    
+    Das neue Projekt wird in der Programmiersprache Rust geschrieben,
+    anstatt eines objektorientierten Designs wird ein Entity component system benutzt.
+    
+    \subsection{Kann-Ziele}
+    
+    \subsubsection*{Hundefels}
+    
+    Einige Features des Vorgängerprojektes werden als Kann-Ziele klassifiziert, da sie nicht für die Funktionalität des Projektes absolut notwendig sind.
+    
+    \begin{itemize}
+        \item Laden von Leveln aus externen Dateien (wäre durch neue features komplizierter)
+        \item Command-Line Argumente (Funktionalität größtenteils überflüssig oder besser als Konfigurationsdatei zu lösen)
+    \end{itemize}
+    
+    \subsubsection*{Andere}
+    
+    \begin{itemize}
+        \item Visuelle Effekte (view-bobbing, etc.)
+        \item Schießen
+        \item Kartenansicht
+    \end{itemize}
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    \newpage
+    
+    \section{Verwendete Technologien}
+    
+    \subsection{Rust}
+    
+    Rust ist eine Multiparadigmen-Systemprogrammiersprache mit einem Fokus auf Performance und Sicherheit. Dies wird erreicht, indem anstatt eines Garbage Collectors oder händischem Memory managements ein sogenannter Borrow Checker verwendet wird, der sogenannte Lifetimes und Scope von Variablen überprüft und Regeln für Referenzen durchsetzt.
+    
+    \subsection{Entity component system}
+    
+    Entity component system (kurz ECS) ist ein Softwarearchitekturmuster, welches vor allem in der Spieleentwicklung genutzt wird.\\
+    Im Gegensatz zu objektorientierten Programmen werden im ECS Daten und Funktionalität nicht gruppiert, sondern getrennt in sogenannte ``Components'' (Daten) und ``Systems'' (Funktionalität).
+    Zentral im ECS sind die ``Entities'': Objekte, die Components enthalten, auf welche Systems angewandt werden.\\
+    Systems können spezifizieren, welche Components für sie notwendig sind und werden nur auf die Entities angewandt, die alle benötigten Components enthalten.\\
+    Zum Beispiel wird in diesem Projekt mit einem Component definiert, ob eine Entity der Spieler ist, und deshalb eine Kamera enthalten sollte, mit einem anderen ob die Entity mit einer KI ausgestattet ist. Entities ohne diese beiden Components sind stationär oder bewegen sich gleichförmig ohne steuerung (abhängig davon, ob sie die Bewegungs-Component enthält).
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    \newpage
+    
+    \section{Quellen}
+    
+    \begin{itemize}
+        \item Viel Code wurde direkt vom Vorgängerprojekt zu Rust übersetzt und wiederverwendet. \\
+        \verb|https://github.com/MacAphon/hundefels2d|
+        
+        \item Steve Klabnik \& Carol Nichols: ``The Rust Programming Language'' \\
+        \verb|https://doc.rust-lang.org/stable/book/|
+        
+        \item ``Rust by Example'' \\
+        \verb|https://doc.rust-lang.org/rust-by-example/|
+        
+        \item ``Rust Coockbook'' \\
+        \verb|https://rust-lang-nursery.github.io/rust-cookbook/|
+        
+        \item ``Learn Game Development in Rust'' \\
+        \verb|https://sunjay.dev/learn-game-dev| \\
+        \verb|https://github.com/sunjay/rust-simple-game-dev-tutorial/|
+        
+        \item 3DSage: ``Make Your Own Raycaster Part 1'' \\ \verb|https://youtu.be/gYRrGTC7GtA|\\ 
+        Quellcode verfügbar unter \verb|https://github.com/3DSage/OpenGL-Raycaster\_v1|
+    \end{itemize}
+    
 \end{document}

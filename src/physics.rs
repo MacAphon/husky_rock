@@ -63,7 +63,7 @@ impl<'a> System<'a> for Physics {
             }
             // right
             if level[pos.1 as usize >> 6][(pos.0 + 8.) as usize >> 6] != 0 {
-                pos.0 += ((pos.0 as usize >> 6) << 6) as f64 - pos.0;
+                pos.0 += pos.0 - ((pos.0 as usize >> 6) << 6) as f64 - 64.;
             }
             // up
             if level[(pos.1 - 8.) as usize >> 6][pos.0 as usize >> 6] != 0 {
@@ -71,7 +71,7 @@ impl<'a> System<'a> for Physics {
             }
             // down
             if level[(pos.1 + 8.) as usize >> 6][pos.0 as usize >> 6] != 0 {
-                pos.1 += ((pos.1 as usize >> 6) << 6) as f64 - pos.1;
+                pos.1 += pos.1 - ((pos.1 as usize >> 6) << 6) as f64 - 64.;
             }
 
             // update position and rotation
@@ -80,4 +80,19 @@ impl<'a> System<'a> for Physics {
             position.y = pos.1;
         }
     }
+}
+
+/**************************************************************************************************/
+// player position resource
+
+pub type SystemDataPPos<'a> = (
+    ReadStorage<'a, Position>,
+    ReadStorage<'a, IsPlayer>,
+);
+
+pub fn get_player_position((pos, ipl): SystemDataPPos) -> (f64, f64) {
+    for (pos, _) in (&pos, &ipl).join() {
+        return (pos.x, pos.y);
+    }
+    (0., 0.) // should never be executed
 }

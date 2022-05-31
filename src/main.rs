@@ -4,21 +4,20 @@ mod input;
 mod physics;
 mod rays;
 mod render;
+mod ai;
 
 use std::time::{Duration, Instant};
+use std::thread;
 
 use sdl2::event::Event;
 use sdl2::image::{self, InitFlag, LoadTexture};
 use sdl2::keyboard::Keycode;
-use sdl2::pixels::Color;
-use sdl2::rect::{Point, Rect};
 use sdl2::render::Texture;
 
 use specs::prelude::*;
 use specs::WorldExt;
 
 use crate::components::*;
-use crate::render::*;
 
 fn main() -> Result<(), String> {
     /**********************************************************************************************/
@@ -48,6 +47,7 @@ fn main() -> Result<(), String> {
     let mut textures: Vec<Texture> = Vec::new();
     textures.push(texture_creator.load_texture("assets/bricks_01.png")?);
     textures.push(texture_creator.load_texture("assets/lamp_01.png")?);
+    textures.push(texture_creator.load_texture("assets/pot_01.png")?);
 
     let mut event_pump = sdl_context.event_pump()?;
 
@@ -55,6 +55,7 @@ fn main() -> Result<(), String> {
 
     let mut world = World::new();
     world.register::<UserControlled>();
+    world.register::<HasAI>();
     world.register::<Position>();
     world.register::<Rotation>();
     world.register::<VelocityMultiplier>();
@@ -66,40 +67,42 @@ fn main() -> Result<(), String> {
     let mut dispatcher = DispatcherBuilder::new()
         .with(input::Input, "Input", &[])
         .with(physics::Physics, "Physics", &[])
+        .with(ai::AI, "AI", &["Physics"])
         // TODO add remaining systems
         .build();
 
     dispatcher.setup(&mut world);
 
     init::initialize_player(&mut world);
-    for i in (128..769).step_by(64) {
-        init::initialize_world_object(&mut world, (65., i as f64));
-    }
+    //for i in (128..769).step_by(256) {
+    //    init::initialize_world_object(&mut world, (512., i as f64));
+    //}
+    init::initialize_world_object(&mut world, (1, 1));
+    init::initialize_enemy(&mut world, (8,8));
 
     world.insert(PlayerInput(Vec::new()));
+    world.insert(PlayerPosition((0., 0.)));
 
     // set up the map
     // TODO add ability to load map from file
     world.insert(LevelMap(vec![
         vec![1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
         vec![1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        vec![1, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 2, 0, 0, 0, 1],
+        vec![1, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        vec![1, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 1],
+        vec![1, 0, 0, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        vec![1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 1],
         vec![1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
         vec![1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        vec![1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        vec![1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 1],
+        vec![1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 1],
+        vec![1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 0, 1],
+        vec![1, 0, 0, 0, 2, 2, 2, 0, 0, 0, 0, 2, 0, 0, 0, 1],
+        vec![1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 1],
         vec![1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        vec![1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        vec![1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        vec![1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        vec![1, 0, 0, 0, 0, 0, 0, 1, 0, 2, 2, 2, 2, 2, 0, 1],
-        vec![1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
-        vec![1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
-        vec![1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
-        vec![1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
-        vec![1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
         vec![1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     ]));
-
-    // TODO create entities
 
     // pre-loop setup
     let frame_time = Duration::from_millis(1000 / 60); // for 60 fps
@@ -113,6 +116,7 @@ fn main() -> Result<(), String> {
         {
             let mut player_input: Vec<PlayerInputCommand> = Vec::new();
             let mut player_input_resource = world.write_resource::<PlayerInput>();
+            let mut player_position = world.write_resource::<PlayerPosition>();
 
             // handle events
             for event in event_pump.poll_iter() {
@@ -239,6 +243,7 @@ fn main() -> Result<(), String> {
             }
 
             *player_input_resource = PlayerInput(player_input);
+            *player_position = PlayerPosition(physics::get_player_position(world.system_data()));
         }
         // update
         dispatcher.dispatch(&mut world);
@@ -248,7 +253,7 @@ fn main() -> Result<(), String> {
         render::render(&mut canvas, &textures, world.system_data(), world.system_data())?;
 
         // time management
-        ::std::thread::sleep(frame_time.saturating_sub(start_time.elapsed()));
+        thread::sleep(frame_time.saturating_sub(start_time.elapsed()));
     }
 
     Ok(())
