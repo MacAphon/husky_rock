@@ -153,6 +153,7 @@ pub fn render(
         render_rectangle_abs(canvas, Color::RGB(255, 255, 127), (pos.x/2.,pos.y/2.), (7, 7))?;
 
          */
+
         /*
         // vertical line in the middle of the screen
         canvas.draw_line(

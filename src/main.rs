@@ -78,7 +78,13 @@ fn main() -> Result<(), String> {
     //    init::initialize_world_object(&mut world, (512., i as f64));
     //}
     init::initialize_world_object(&mut world, (1, 1));
-    init::initialize_enemy(&mut world, (8,8));
+    init::initialize_world_object(&mut world, (3, 1));
+    init::initialize_world_object(&mut world, (5, 1));
+    init::initialize_world_object(&mut world, (7, 1));
+    init::initialize_world_object(&mut world, (9, 1));
+    init::initialize_world_object(&mut world, (11, 1));
+    init::initialize_world_object(&mut world, (13, 1));
+    init::initialize_enemy(&mut world, (8, 8));
 
     world.insert(PlayerInput(Vec::new()));
     world.insert(PlayerPosition((0., 0.)));
