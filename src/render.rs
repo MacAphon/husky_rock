@@ -1,4 +1,4 @@
-use std::f64::consts::{PI, TAU};
+use std::f64::consts::*;
 
 use sdl2::pixels::Color;
 use sdl2::rect::{Point, Rect};
@@ -9,7 +9,7 @@ use specs::prelude::*;
 use crate::components::*;
 use crate::rays::*;
 
-const FOV: f64 = 2.;
+const FOV: f64 = FRAC_PI_2;
 
 pub type SystemDataPl<'a> = (
     ReadStorage<'a, Position>,
@@ -47,6 +47,7 @@ pub fn render(
         entities.sort_by(|b, a| a.0.partial_cmp(&b.0).unwrap());
 
         let rays = multi_cast_ray((pos.x, pos.y), rot.r, FOV, n, &level_map);
+        
         let mut rendered_rays: Vec<bool> = vec![false; (n+1) as usize];
         for entity in &entities {
             for ray in &rays {
@@ -104,55 +105,57 @@ pub fn render(
             )?;
             rendered_rays[ray.1 as usize] = true;
         }
+        
 
-        /******************************************************************************************/
+        /* *****************************************************************************************/
         // debug rendering on top
-
-        /*
-        // top-down perspective of the rays
-        canvas.set_draw_color(Color::RGB(255, 0, 255));
-        for ray in &rays {
-            canvas.set_draw_color(match ray.0 .3 {
-                WallDirection::Vertical => Color::RGB(0, 255, 0),
-                WallDirection::Horizontal => Color::RGB(0, 180, 0),
-            });
-            canvas.draw_line(
-                Point::new((pos.x/2.) as i32, (pos.y/2.) as i32),
-                Point::new((ray.0 .1/2.) as i32, (ray.0 .2/2.) as i32),
-            )?;
-        }
-         */
-
-        /*
-        // map
-        for (y, yv) in level_map.0.iter().enumerate() {
-            for (x, xv) in yv.iter().enumerate() {
-                if *xv != 0 {
-                    render_rectangle_abs(
-                        canvas,
-                        Color::RGB(255, 0, 255),
-                        ((x*32) as f64 + 16., (y*32) as f64 + 16.),
-                        (30, 30),
-                    )?;
-                }
+        #[cfg(feature = "debug_rays")]
+        {
+            // top-down perspective of the rays
+            canvas.set_draw_color(Color::RGB(255, 0, 255));
+            for ray in &rays {
+                canvas.set_draw_color(match ray.0 .3 {
+                    WallDirection::Vertical => Color::RGB(0, 255, 0),
+                    WallDirection::Horizontal => Color::RGB(0, 180, 0),
+                });
+                canvas.draw_line(
+                    Point::new((pos.x/2.) as i32, (pos.y/2.) as i32),
+                    Point::new((ray.0 .1/2.) as i32, (ray.0 .2/2.) as i32),
+                )?;
             }
         }
 
-         */
+        #[cfg(feature = "debug_map")]
+        {
+            // map
+            for (y, yv) in level_map.0.iter().enumerate() {
+                for (x, xv) in yv.iter().enumerate() {
+                    if *xv != 0 {
+                        render_rectangle_abs(
+                            canvas,
+                            Color::RGB(255, 0, 255),
+                            ((x*32) as f64 + 16., (y*32) as f64 + 16.),
+                            (30, 30),
+                        )?;
+                    }
+                }
+            }
 
-        /*
-        // positions of entities
-        for entity in &entities {
-            render_rectangle_abs(canvas, Color::RGB(255, 255, 0), (entity.1/2., entity.2/2.), (5, 5))?;
-        }
 
-         */
 
-        /*
-        // position of the player
-        render_rectangle_abs(canvas, Color::RGB(255, 255, 127), (pos.x/2.,pos.y/2.), (7, 7))?;
 
-         */
+            // positions of entities
+            for entity in &entities {
+                render_rectangle_abs(canvas, Color::RGB(255, 255, 0), (entity.1/2., entity.2/2.), (5, 5))?;
+            }
+
+
+
+
+            // position of the player
+            render_rectangle_abs(canvas, Color::RGB(255, 255, 127), (pos.x/2.,pos.y/2.), (7, 7))?;
+        }  
+
 
         /*
         // vertical line in the middle of the screen

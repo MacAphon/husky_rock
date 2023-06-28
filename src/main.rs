@@ -7,7 +7,7 @@ mod render;
 mod ai;
 
 use std::time::{Duration, Instant};
-use std::thread;
+use std::{env, thread};
 
 use sdl2::event::Event;
 use sdl2::image::{self, InitFlag, LoadTexture};
@@ -20,10 +20,16 @@ use specs::WorldExt;
 use crate::components::*;
 
 fn main() -> Result<(), String> {
-    /**********************************************************************************************/
+    /* *********************************************************************************************/
     // command-line arguments
-    // TODO Command-line Arguments
-    /**********************************************************************************************/
+    /*
+    let args: Vec<String> = env::args().collect();
+
+    if args[0] == "-h" || args[0] == "--help" {
+        println!("husky_rock: a raycasting game engine");
+    }
+     */
+    /* *********************************************************************************************/
     // setup
 
     // Set up the rendering system, window etc.
@@ -77,6 +83,7 @@ fn main() -> Result<(), String> {
     //for i in (128..769).step_by(256) {
     //    init::initialize_world_object(&mut world, (512., i as f64));
     //}
+    
     init::initialize_world_object(&mut world, (1, 1));
     init::initialize_world_object(&mut world, (3, 1));
     init::initialize_world_object(&mut world, (5, 1));
@@ -85,6 +92,7 @@ fn main() -> Result<(), String> {
     init::initialize_world_object(&mut world, (11, 1));
     init::initialize_world_object(&mut world, (13, 1));
     init::initialize_enemy(&mut world, (8, 8));
+    
 
     world.insert(PlayerInput(Vec::new()));
     world.insert(PlayerPosition((0., 0.)));
@@ -115,7 +123,7 @@ fn main() -> Result<(), String> {
 
     // W A S D -> <-
     let mut pressed_keys = [0, 0, 0, 0, 0, 0];
-    /**********************************************************************************************/
+    /* *********************************************************************************************/
     // game loop
     'running: loop {
         let start_time = Instant::now();

@@ -17,3 +17,8 @@ specs-derive = "0.4.1"
 version = "0.35.2"
 default-features = false
 features = ["image"]
+
+[features]
+debug_full = ["debug_map", "debug_rays"]
+debug_map = []
+debug_rays = []
